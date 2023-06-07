@@ -1,0 +1,55 @@
+import requests
+
+# Set your access token and user ID here
+access_token = "YOUR_ACCESS_TOKEN"
+user_id = "YOUR_USER_ID"
+
+# Set the threshold for popularity (e.g., minimum number of likes, views, or comments)
+popularity_threshold = 10000
+
+# Function to fetch Instagram accounts with popular reels
+def fetch_popular_accounts():
+    # Get reels from the user's account
+    reels_url = f"https://graph.instagram.com/{user_id}/reels?fields=media_url,permalink&access_token={access_token}"
+    reels_response = requests.get(reels_url)
+    reels_data = reels_response.json()
+
+    popular_accounts = []
+
+    # Iterate through the reels and check for popularity
+    for reel in reels_data['data']:
+        media_url = reel['media_url']
+        permalink = reel['permalink']
+
+        # Get reel engagement metrics
+        metrics_url = f"https://graph.facebook.com/v14.0/{permalink}?fields=engagement&access_token={access_token}"
+        metrics_response = requests.get(metrics_url)
+        metrics_data = metrics_response.json()
+
+        # Check if the reel meets the popularity threshold
+        engagement = metrics_data['engagement']
+        likes = engagement['like_count']
+        views = engagement['video_view_count']
+        comments = engagement['comment_count']
+
+        if likes >= popularity_threshold or views >= popularity_threshold or comments >= popularity_threshold:
+            popular_accounts.append({
+                'media_url': media_url,
+                'permalink': permalink,
+                'likes': likes,
+                'views': views,
+                'comments': comments
+            })
+
+    return popular_accounts
+
+# Fetch popular accounts and print the results
+popular_accounts = fetch_popular_accounts()
+for account in popular_accounts:
+    print(f"Media URL: {account['media_url']}")
+    print(f"Permalink: {account['permalink']}")
+    print(f"Likes: {account['likes']}")
+    print(f"Views: {account['views']}")
+    print(f"Comments: {account['comments']}")
+    print()
+
